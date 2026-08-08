@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../../utils/email.php';
 
 class AuthController extends Controller {
     private User $userModel;
@@ -8,6 +9,10 @@ class AuthController extends Controller {
     public function __construct() {
         parent::__construct();
         $this->userModel = new User();
+    }
+
+    private function generateVerificationCode(): string {
+        return str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
     public function register(): void {
@@ -37,6 +42,16 @@ class AuthController extends Controller {
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);
         $userId = $this->userModel->createUser($name, $email, $passwordHash, $phone, $role);
 
+        $verificationCode = $this->generateVerificationCode();
+        $this->userModel->setVerificationCode($userId, $verificationCode);
+
+        try {
+            sendVerificationCode($email, $verificationCode);
+        } catch (Exception $e) {
+        }
+
+        session_regenerate_id(true);
+
         $_SESSION['user_id'] = $userId;
         $_SESSION['role'] = $role;
         $_SESSION['name'] = $name;
@@ -44,8 +59,63 @@ class AuthController extends Controller {
 
         $user = $this->userModel->getUserById($userId);
         unset($user['password_hash']);
+        unset($user['verification_code']);
 
         $this->json(["message" => "Registration successful", "user" => $user], 201);
+    }
+
+    public function sendVerification(): void {
+        $this->requireLogin();
+        $userId = $this->getUserId();
+        $user = $this->userModel->getUserById($userId);
+
+        if (!$user) {
+            $this->json(["message" => "User not found"], 404);
+        }
+        if ($this->userModel->isEmailVerified($userId)) {
+            $this->json(["message" => "Email already verified"], 400);
+        }
+
+        $verificationCode = $this->generateVerificationCode();
+        $this->userModel->setVerificationCode($userId, $verificationCode);
+
+        try {
+            sendVerificationCode($user['email'], $verificationCode);
+        } catch (Exception $e) {
+        }
+
+        $this->json(["message" => "Verification code sent"]);
+    }
+
+    public function verifyEmail(): void {
+        $this->requireLogin();
+        $input = $this->getJsonInput();
+        $code = trim((string)($input['code'] ?? ''));
+
+        if (empty($code)) {
+            $this->json(["message" => "Verification code is required"], 422);
+        }
+
+        $userId = $this->getUserId();
+        $user = $this->userModel->getUserById($userId);
+
+        if (!$user) {
+            $this->json(["message" => "User not found"], 404);
+        }
+        if ($this->userModel->isEmailVerified($userId)) {
+            $this->json(["message" => "Email already verified"], 400);
+        }
+        if (!hash_equals((string)($user['verification_code'] ?? ''), $code)) {
+            $this->json(["message" => "Invalid verification code"], 400);
+        }
+
+        $this->userModel->markEmailVerified($userId);
+
+        $updated = $this->userModel->getUserById($userId);
+        unset($updated['password_hash']);
+        unset($updated['verification_code']);
+
+        $this->json(["message" => "Email verified successfully", "user" => $updated]);
     }
 
     public function login(): void {
@@ -63,12 +133,15 @@ class AuthController extends Controller {
             $this->json(["message" => "Invalid email or password"], 401);
         }
 
+        session_regenerate_id(true);
+
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['name'] = $user['name'];
         $_SESSION['email'] = $user['email'];
 
         unset($user['password_hash']);
+        unset($user['verification_code']);
         $this->json(["message" => "Login successful", "user" => $user]);
     }
 
@@ -97,6 +170,7 @@ class AuthController extends Controller {
         }
 
         unset($user['password_hash']);
+        unset($user['verification_code']);
         $this->json(["user" => $user]);
     }
 }

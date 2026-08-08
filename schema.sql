@@ -11,6 +11,8 @@ CREATE TABLE users (
     password_hash   VARCHAR(255)    NOT NULL,
     phone           VARCHAR(50)     NULL DEFAULT NULL,
     role            ENUM('traveler', 'owner', 'admin') NOT NULL DEFAULT 'traveler',
+    email_verified  TINYINT(1)      NOT NULL DEFAULT 0,
+    verification_code VARCHAR(6)    NULL DEFAULT NULL,
     created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -171,6 +173,24 @@ CREATE TABLE reviews (
     INDEX idx_reviews_user_id (user_id),
     CONSTRAINT fk_reviews_hotel FOREIGN KEY (hotel_id) REFERENCES hotels(id) ON DELETE CASCADE,
     CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------------
+-- Table: notifications
+-- ------------------------------------------------------------
+CREATE TABLE notifications (
+    id              INT             NOT NULL AUTO_INCREMENT,
+    user_id         INT             NOT NULL,
+    booking_id      INT             NULL DEFAULT NULL,
+    type            VARCHAR(50)     NOT NULL DEFAULT 'booking',
+    title           VARCHAR(255)    NOT NULL,
+    message         TEXT            NULL,
+    is_read         TINYINT(1)      NOT NULL DEFAULT 0,
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_notifications_user (user_id),
+    INDEX idx_notifications_read (user_id, is_read),
+    CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------------

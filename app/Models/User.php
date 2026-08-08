@@ -34,4 +34,22 @@ class User extends Model {
         $user = $this->findById($ownerId);
         return $user ? $user['email'] : null;
     }
+
+    public function setVerificationCode(int $id, string $code): bool {
+        return $this->update($id, ['verification_code' => $code, 'email_verified' => 0]);
+    }
+
+    public function getVerificationCode(int $id): ?string {
+        $user = $this->findById($id);
+        return $user ? ($user['verification_code'] ?? null) : null;
+    }
+
+    public function isEmailVerified(int $id): bool {
+        $user = $this->findById($id);
+        return $user ? (bool)($user['email_verified'] ?? 0) : false;
+    }
+
+    public function markEmailVerified(int $id): bool {
+        return $this->update($id, ['verification_code' => null, 'email_verified' => 1]);
+    }
 }

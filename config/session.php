@@ -1,5 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.gc_maxlifetime', 86400);
     session_set_cookie_params([
         'lifetime' => 86400,
         'path' => '/',
@@ -8,7 +9,12 @@ if (session_status() === PHP_SESSION_NONE) {
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
-    session_start();
+    if (!session_start()) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode(["message" => "Failed to start session"]);
+        exit;
+    }
 }
 
 function isLoggedIn() {

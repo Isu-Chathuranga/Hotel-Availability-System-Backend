@@ -1,13 +1,6 @@
 <?php
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Credentials: true');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once __DIR__ . '/utils/cors.php';
+applyCors();
 
 require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/app/autoload.php';
@@ -31,6 +24,10 @@ $routes = [
     'api/auth/logout'            => ['AuthController', 'logout'],
     'api/auth/check-session'     => ['AuthController', 'checkSession'],
     'api/auth/check_session'     => ['AuthController', 'checkSession'],
+    'api/auth/send-verification' => ['AuthController', 'sendVerification'],
+    'api/auth/send_verification' => ['AuthController', 'sendVerification'],
+    'api/auth/verify-email'      => ['AuthController', 'verifyEmail'],
+    'api/auth/verify_email'      => ['AuthController', 'verifyEmail'],
     'api/hotels/list'            => ['HotelController', 'list'],
     'api/hotels/get'             => ['HotelController', 'get'],
     'api/hotels/create'          => ['HotelController', 'create'],
@@ -71,6 +68,9 @@ $routes = [
     'api/admin/hotels'           => ['AdminController', 'hotels'],
     'api/admin/delete-hotel'     => ['AdminController', 'deleteHotel'],
     'api/admin/delete_hotel'     => ['AdminController', 'deleteHotel'],
+    'api/notifications/list'     => ['NotificationController', 'list'],
+    'api/notifications/mark-read' => ['NotificationController', 'markRead'],
+    'api/notifications/mark_read' => ['NotificationController', 'markRead'],
 ];
 
 $routeFound = false;

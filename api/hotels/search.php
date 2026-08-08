@@ -1,13 +1,6 @@
 <?php
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Credentials: true');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once __DIR__ . '/../../utils/cors.php';
+applyCors();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -27,7 +20,7 @@ $checkOut = $_GET['check_out'] ?? '';
 $rooms = $_GET['rooms'] ?? '';
 $minPrice = $_GET['min_price'] ?? '';
 $maxPrice = $_GET['max_price'] ?? '';
-$rating = $_GET['rating'] ?? '';
+$rating = $_GET['rating'] ?? $_GET['min_rating'] ?? '';
 $travelPurpose = $_GET['travel_purpose'] ?? '';
 $event = $_GET['event'] ?? '';
 
@@ -64,14 +57,23 @@ if (!empty($rating)) {
     $params[] = (float)$rating;
 }
 
+if (!empty($rooms)) {
+    $sql .= " AND (SELECT COUNT(*) FROM rooms WHERE hotel_id = h.id AND is_available = 1) >= ?";
+    $params[] = (int)$rooms;
+}
+
 if (!empty($travelPurpose)) {
-    $sql .= " AND h.travel_purpose LIKE ?";
-    $params[] = "%{$travelPurpose}%";
+    $sql .= " AND (h.travel_purpose LIKE ? OR h.amenities LIKE ?)";
+    $purposeTerm = "%{$travelPurpose}%";
+    $params[] = $purposeTerm;
+    $params[] = $purposeTerm;
 }
 
 if (!empty($event)) {
-    $sql .= " AND e.name LIKE ?";
-    $params[] = "%{$event}%";
+    $sql .= " AND (e.name LIKE ? OR h.amenities LIKE ?)";
+    $eventTerm = "%{$event}%";
+    $params[] = $eventTerm;
+    $params[] = $eventTerm;
 }
 
 if (!empty($checkIn) && !empty($checkOut)) {

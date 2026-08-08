@@ -1,13 +1,6 @@
 <?php
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Credentials: true');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once __DIR__ . '/../../utils/cors.php';
+applyCors();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
     http_response_code(405);
@@ -59,6 +52,17 @@ $stmt->execute([$id]);
 $stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ?");
 $stmt->execute([$id]);
 $updatedBooking = $stmt->fetch();
+
+$stmt = $conn->prepare(
+    "INSERT INTO notifications (user_id, booking_id, type, title, message)
+     VALUES (?, ?, 'booking', ?, ?)"
+);
+$stmt->execute([
+    $booking['owner_id'],
+    $id,
+    "Booking " . $updatedBooking['booking_code'] . " cancelled",
+    "The booking for " . $booking['hotel_name'] . " (" . $updatedBooking['booking_code'] . ") was cancelled."
+]);
 
 sendBookingStatusUpdate($booking['user_email'], $updatedBooking, 'cancelled');
 

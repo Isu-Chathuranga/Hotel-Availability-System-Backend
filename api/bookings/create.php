@@ -1,13 +1,6 @@
 <?php
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Credentials: true');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+require_once __DIR__ . '/../../utils/cors.php';
+applyCors();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -91,6 +84,17 @@ try {
     $stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ?");
     $stmt->execute([$bookingId]);
     $booking = $stmt->fetch();
+
+    $stmt = $conn->prepare(
+        "INSERT INTO notifications (user_id, booking_id, type, title, message)
+         VALUES (?, ?, 'booking', ?, ?)"
+    );
+    $stmt->execute([
+        $hotel['owner_id'],
+        $bookingId,
+        "New booking for " . $hotel['name'],
+        $guestName . " booked " . $room['room_type'] . " from " . $checkIn . " to " . $checkOut . " (" . $nights . " night(s), $" . $totalPrice . "). Booking code: " . $bookingCode
+    ]);
 
     try {
         $userEmail = $_SESSION['email'] ?? '';

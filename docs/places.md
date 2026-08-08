@@ -39,9 +39,60 @@ List all nearby places for a hotel.
 
 ---
 
-## POST /create
+## GET /geocode
 
-Add a nearby place to a hotel.
+Reverse-geocode latitude/longitude coordinates using the Google Geocoding API. Returns the place name and formatted address of the nearest point of interest.
+
+**Authentication:** None (public)
+
+**Query Parameters:**
+
+| Parameter | Type  | Required | Description      |
+|-----------|-------|----------|------------------|
+| lat       | float | Yes      | Latitude         |
+| lng       | float | Yes      | Longitude        |
+
+**Response 200:**
+```json
+{
+  "name": "Eiffel Tower",
+  "display_name": "Eiffel Tower, Champ de Mars, 5 Av. Anatole France, 75007 Paris, France",
+  "latitude": 48.8584,
+  "longitude": 2.2945
+}
+```
+
+**Errors:** 400 (missing/invalid lat or lng), 404 (no results found), 502 (Google API failure), 500 (API key not configured)
+
+---
+
+## POST /extract
+
+Extract place name and coordinates from a Google Maps URL (e.g. `https://maps.google.com/?q=...` or `https://goo.gl/maps/...`). Resolves short links, parses `@lat,lng` and `/place/Name/` patterns, and enriches with the Geocoding API when coordinates are found.
+
+**Authentication:** None (public)
+
+**Request Body (JSON):**
+
+| Parameter | Type   | Required | Description        |
+|-----------|--------|----------|--------------------|
+| url       | string | Yes      | Google Maps / short URL to parse |
+
+**Response 200:**
+```json
+{
+  "name": "Eiffel Tower",
+  "display_name": "Champ de Mars, 5 Av. Anatole France, 75007 Paris, France",
+  "latitude": 48.8584,
+  "longitude": 2.2945
+}
+```
+
+**Errors:** 400 (missing url), 500 (failure)
+
+---
+
+## POST /create
 
 **Authentication:** `owner` role required (must own the hotel)
 

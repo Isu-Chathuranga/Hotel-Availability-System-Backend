@@ -86,8 +86,47 @@ Check if user is authenticated.
 **Response 200:**
 ```json
 {
-  "user": { "id": 1, "name": "John Doe", "email": "john@example.com", "phone": "1234567890", "role": "traveler", "created_at": "2024-01-01 12:00:00" }
+  "user": { "id": 1, "name": "John Doe", "email": "john@example.com", "phone": "1234567890", "role": "traveler", "email_verified": 0, "created_at": "2024-01-01 12:00:00" }
 }
 ```
 
 **Errors:** 401 (not authenticated)
+
+---
+
+## POST /send_verification
+
+Send (or resend) the 6-digit email verification code to the logged-in user. Called automatically on registration; use it for the "Resend code" flow.
+
+**Authentication:** Required
+
+**Response 200:**
+```json
+{ "message": "Verification code sent" }
+```
+
+**Errors:** 401 (not logged in), 404 (user not found), 400 (email already verified)
+
+---
+
+## POST /verify_email
+
+Verify the logged-in user's email with the 6-digit code sent by email.
+
+**Authentication:** Required
+
+**Request Body (JSON):**
+
+| Parameter | Type   | Required | Description             |
+|-----------|--------|----------|-------------------------|
+| code      | string | Yes      | 6-digit verification code |
+
+**Response 200:**
+```json
+{
+  "message": "Email verified successfully",
+  "user": { "id": 1, "name": "John Doe", "email": "john@example.com", "phone": "1234567890", "role": "owner", "email_verified": 1, "created_at": "2024-01-01 12:00:00" }
+}
+```
+
+**Errors:** 401 (not logged in), 422 (missing code), 404 (user not found), 400 (already verified / invalid code)

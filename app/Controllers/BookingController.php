@@ -4,6 +4,7 @@ require_once __DIR__ . '/../Models/Booking.php';
 require_once __DIR__ . '/../Models/Hotel.php';
 require_once __DIR__ . '/../Models/Room.php';
 require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../Models/Notification.php';
 require_once __DIR__ . '/../../utils/email.php';
 
 class BookingController extends Controller {
@@ -11,6 +12,7 @@ class BookingController extends Controller {
     private Hotel $hotelModel;
     private Room $roomModel;
     private User $userModel;
+    private Notification $notificationModel;
 
     public function __construct() {
         parent::__construct();
@@ -18,6 +20,7 @@ class BookingController extends Controller {
         $this->hotelModel = new Hotel();
         $this->roomModel = new Room();
         $this->userModel = new User();
+        $this->notificationModel = new Notification();
     }
 
     public function create(): void {
@@ -76,6 +79,15 @@ class BookingController extends Controller {
             );
 
             $booking = $this->bookingModel->findById($bookingId);
+
+            $this->notificationModel->createForUser(
+                (int)$hotel['owner_id'],
+                $bookingId,
+                'booking',
+                "New booking for " . $hotel['name'],
+                $guestName . " booked " . $room['room_type'] . " from " . $checkIn . " to " . $checkOut .
+                    " (" . $nights . " night(s), $" . $totalPrice . "). Booking code: " . $bookingCode
+            );
 
             try {
                 $userEmail = $_SESSION['email'] ?? '';

@@ -1,4 +1,28 @@
 <?php
+function sendVerificationCode($userEmail, $code) {
+    $subject = "Verify Your Email - StayVora";
+    $message = "Your email verification code is: " . $code . "\n\n";
+    $message .= "Enter this code on the verification page to activate your account.\n";
+    $message .= "This code expires in 10 minutes.\n\n";
+    $message .= "If you did not request this, you can safely ignore this email.\n\n";
+    $message .= "Thank you for choosing StayVora!";
+
+    $headers = "From: noreply@stayvora.com\r\n";
+    $headers .= "Reply-To: support@stayvora.com\r\n";
+
+    $logEntry = date('Y-m-d H:i:s') . " - TO: $userEmail - SUBJECT: $subject - MESSAGE: " . str_replace("\n", " ", $message) . PHP_EOL;
+    $logFile = __DIR__ . '/../logs/emails.log';
+    $logDir = dirname($logFile);
+    if (!is_dir($logDir)) {
+        mkdir($logDir, 0777, true);
+    }
+    file_put_contents($logFile, $logEntry, FILE_APPEND);
+
+    if (filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
+        @mail($userEmail, $subject, $message, $headers);
+    }
+}
+
 function sendBookingConfirmation($userEmail, $bookingDetails, $hotelName) {
     $subject = "Booking Confirmation - " . $hotelName;
     $message = "Your booking at " . $hotelName . " has been confirmed.\n\n";
@@ -22,7 +46,7 @@ function sendBookingConfirmation($userEmail, $bookingDetails, $hotelName) {
     file_put_contents($logFile, $logEntry, FILE_APPEND);
 
     if (filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
-        mail($userEmail, $subject, $message, $headers);
+        @mail($userEmail, $subject, $message, $headers);
     }
 }
 
@@ -48,6 +72,6 @@ function sendBookingStatusUpdate($userEmail, $bookingDetails, $status) {
     file_put_contents($logFile, $logEntry, FILE_APPEND);
 
     if (filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
-        mail($userEmail, $subject, $message, $headers);
+        @mail($userEmail, $subject, $message, $headers);
     }
 }

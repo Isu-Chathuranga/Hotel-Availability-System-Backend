@@ -295,3 +295,47 @@ Delete a hotel image.
 ```
 
 **Errors:** 400 (missing image ID), 403 (not owner), 404 (not found)
+
+---
+
+## POST /add_amenity
+
+Add a single amenity to a hotel's comma-separated `amenities` field (idempotent - no duplicate added).
+
+**Authentication:** `owner` role required (must own the hotel)
+
+**Request Body (JSON):**
+
+| Parameter | Type   | Required | Description     |
+|-----------|--------|----------|-----------------|
+| hotel_id  | int    | Yes      | Hotel ID        |
+| amenity   | string | Yes      | Amenity name, e.g. "Pool" |
+
+**Response 200:**
+```json
+{ "message": "Amenity added successfully", "hotel": { "...full hotel object with updated amenities..." } }
+```
+
+**Errors:** 400 (missing/invalid hotel_id), 422 (empty amenity), 403 (not owner), 404 (not found)
+
+---
+
+## POST /delete_amenity
+
+Remove a single amenity from a hotel's `amenities` field.
+
+**Authentication:** `owner` role required (must own the hotel)
+
+**Request Body (JSON):**
+
+| Parameter | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| hotel_id  | int    | Yes      | Hotel ID    |
+| amenity   | string | Yes      | Amenity name to remove |
+
+**Response 200:**
+```json
+{ "message": "Amenity removed successfully", "hotel": { ...full hotel object with updated amenities... } }
+```
+
+**Errors:** 400 (missing/invalid hotel_id), 422 (empty amenity), 403 (not owner), 404 (not found)
